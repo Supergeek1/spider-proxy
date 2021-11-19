@@ -1,0 +1,31 @@
+
+stages:
+  - build
+  - docker_push
+
+variables:
+
+  DOCKER_REGISTRY_HOST: harbor01.wisers.com
+  DOCKER_REGISTRY_USER: ci-headless-user
+  DOCKER_REGISTRY_PWD: ci1234
+  DOCKER_IMAGE:  $DOCKER_REGISTRY_HOST/wisers-spider/spider-proxy:updater
+  DOCKER_HOST: tcp://localhost:2375
+  DOCKER_DRIVER: overlay2
+services:
+  - docker:18.09-dind
+
+
+docker_push:
+  image: docker:latest
+  only:
+    - updater
+  stage: docker_push
+  tags:
+    - cnaws-dockerize
+  before_script:
+    - docker info
+    - docker login  -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PWD $DOCKER_REGISTRY_HOST
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+    - docker image rm $DOCKER_IMAGE
