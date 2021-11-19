@@ -1,4 +1,6 @@
-from config.settings import REDIS_PORT, REDIS_HOST, REDIS_DB, REST_INTERVAL_PREFIX
+import json
+
+from config.settings import REDIS_PORT, REDIS_HOST, REDIS_DB, REST_INTERVAL_PREFIX, REST_QUEUE_PREFIX
 from util.redis_util import RedisUtil
 from util.rest_util import RestUtil
 
@@ -7,6 +9,15 @@ class ProxyManager:
 
     def __init__(self):
         self.redis_client = RedisUtil.get_redis_client(REDIS_HOST, REDIS_PORT, REDIS_DB)
+
+    def get_proxy_queue_keys(self) -> list:
+        return self.redis_client.keys(REST_QUEUE_PREFIX + '*')
+
+    def get_proxy_queue(self, queue_key) -> list:
+        return self.redis_client.zrange(queue_key, 0, -1)
+
+    def test(self, key):
+        return self.redis_client.get(key)
 
     def get_proxies(self, queue_key: str):
         redis_key = RestUtil.generate_rest_queue(queue_key)
@@ -45,11 +56,22 @@ class ProxyManager:
                     if(#proxy_info_list == 0)then
                         return nil
                     end 
-                    local proxy = proxy_info_list[1]
-                    redis.call('ZREM',KEYS[1], proxy)
-                    local redis_interval_key = \'""" + interval_prefix + """\' .. proxy_info_list[2] ..':'.. proxy
-                    redis.call('SET', redis_interval_key, proxy)
+                    local app = proxy_info_list[1]
+                    redis.call('ZREM',KEYS[1], app)
+                    local redis_interval_key = \'""" + interval_prefix + """\' .. proxy_info_list[2] ..':'.. app
+                    redis.call('SET', redis_interval_key, app)
                     redis.call('EXPIRE', redis_interval_key, KEYS[2])
                     return proxy_info_list  
                     """
         return self.redis_client.eval(lua_script, 2, redis_key, interval_seconds)
+
+    def get_proxies_detail(self, queue_prefix):
+        result = []
+        keys = self.redis_client.keys(queue_prefix + '*')
+        pipeline = self.redis_client.pipeline()
+        for key in keys:
+            pipeline.get(key)
+        proxies = pipeline.execute()
+        for proxy in proxies:
+            result.append(json.loads(proxy))
+        return result

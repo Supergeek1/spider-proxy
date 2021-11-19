@@ -1,9 +1,9 @@
 import threading
+import sys
 
 from config.settings import REDIS_PORT, REDIS_HOST, REDIS_DB, UPDATE_QUEUE_KEY, REST_QUEUE_PREFIX, UPDATER_NAME
 from util.redis_util import RedisUtil
 from util.updater_util import UpdateUtil
-from util.rest_util import RestUtil
 
 
 class UpdateRedisLister:
@@ -26,10 +26,11 @@ class UpdateRedisLister:
                     proxy = redis_key_data.replace(self.redis_key_prefix, '')
                     pipeline = self.redis_client.pipeline()
                     for key in UPDATE_QUEUE_KEY:
-                        pipeline.zrem(RestUtil.generate_rest_queue(key), proxy)
-                        pipeline.zrem(RestUtil.generate_rest_queue_b(key), proxy)
+                        pipeline.zrem(REST_QUEUE_PREFIX + key, proxy)
                     pipeline.hdel(UpdateUtil.generate_track_key(), proxy)
                     pipeline.execute()
-                    print('RedisListen -> remove expired proxy[' + UPDATER_NAME + ']: ' + proxy)
+                    print('RedisListen -> remove expired app[' + UPDATER_NAME + ']: ' + proxy)
             except Exception as e:
                 print(e)
+                sys.exit()
+

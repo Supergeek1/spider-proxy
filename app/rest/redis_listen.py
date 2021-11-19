@@ -22,10 +22,9 @@ class RedisListen:
         for msg in pub.listen():
             try:
                 redis_key_data = msg['data']
-                if isinstance(redis_key_data, bytes):
-                    data_key = redis_key_data.decode()
-                    if data_key.startswith(self.redis_key_prefix):
-                        proxy_info = data_key.replace(self.redis_key_prefix, '')
+                if isinstance(redis_key_data, str):
+                    if redis_key_data.startswith(self.redis_key_prefix):
+                        proxy_info = redis_key_data.replace(self.redis_key_prefix, '')
                         idx = proxy_info.index(':')
                         queue_key = proxy_info[:idx]
                         proxy_info = proxy_info[idx + 1:]
@@ -33,6 +32,6 @@ class RedisListen:
                         speed = int(proxy_info[:idx])
                         proxy = proxy_info[idx + 1:]
                         self.redis_client.zadd(RestUtil.generate_rest_queue(queue_key), {proxy: speed})
-                        print('ReidsListen -> add proxy to rest queue[' + queue_key + ']: ' + proxy)
+                        print('ReidsListen -> add app to rest queue[' + queue_key + ']: ' + proxy)
             except Exception as e:
                 print(e)
