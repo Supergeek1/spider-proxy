@@ -1,30 +1,31 @@
-image: docker:stable
 
 stages:
-  - release
+  - build
+  - docker_push
 
 variables:
-  DOCKER_REGISTRY_HOST: harbor01.wisers.com
-  DOCKER_REGISTRY_USER: ci-headless-user
-  DOCKER_REGISTRY_PWD: ci1234
-  DOCKER_RELEASE_IMAGE:  $DOCKER_REGISTRY_HOST/wisers-spider/spider-proxy:rest
+
+  DOCKER_REGISTRY_HOST:
+  DOCKER_REGISTRY_USER:
+  DOCKER_REGISTRY_PWD:
+  DOCKER_IMAGE:  $DOCKER_REGISTRY_HOST/wisers-spider/spider-proxy:Validator
   DOCKER_HOST: tcp://localhost:2375
   DOCKER_DRIVER: overlay2
-
 services:
-  - name: docker:18.09-dind
+  - docker:18.09-dind
 
-release:
-  stage: release
+
+docker_push:
+  image: docker:latest
   only:
-    - rest
-  before_script:
-    - docker info
-    - docker login -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PWD $DOCKER_REGISTRY_HOST
-  script:
-    - docker build . --pull --label "commit=$CI_COMMIT_SHA" -t $DOCKER_RELEASE_IMAGE
-    - docker push $DOCKER_RELEASE_IMAGE
-    - docker image rm $DOCKER_RELEASE_IMAGE
+    - Validator
+  stage: docker_push
   tags:
     - cnaws-dockerize
-
+  before_script:
+    - docker info
+    - docker login  -u $DOCKER_REGISTRY_USER -p $DOCKER_REGISTRY_PWD $DOCKER_REGISTRY_HOST
+  script:
+    - docker build -t $DOCKER_IMAGE .
+    - docker push $DOCKER_IMAGE
+    - docker image rm $DOCKER_IMAGE

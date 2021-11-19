@@ -1,6 +1,0 @@
-## ipc2
-http://lum-customer-wisers-zone-icp_us_hk-session-{}:ymg4kj2r5dh5@zproxy.luminati.io:22225
-## isd
-http://lum-customer-wisers-zone-isd_hkforum_engagement-session-{}:u1znup0508xa@zproxy.luminati.io:22225
-
-http://lum-customer-wisers-zone-icp_us_philips-session-{}:kpj1rqts2jg4@zproxy.luminati.io:22225
